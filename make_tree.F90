@@ -385,7 +385,7 @@ if (alloc_err.ne.0) stop 'make_tree(): FATAL - failed to allocate memory [lnode]
   do while(ml(inode).gt.0.0) ! ml=-1 signals end of branch.
      dwmax=wlev(ilev)-w
      ! Take step up tree (back in time) by binary split.
-     call split(m,w,mmin,sigma,iseed,dwmax,dw,nprog,mprog) 
+     call split(m,w,mmin,sigma,iseed,dwmax,dw,growthrate(ilev),nprog,mprog) 
      w=w+dw
      !
      select case (nprog)

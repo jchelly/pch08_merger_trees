@@ -105,7 +105,7 @@
 ! 
 !    9) Discard q' if q'<qmin
 ! 
-subroutine split(m2,w,mmin,sigma,iseed,dwmax,dw,nprog,mprog) 
+subroutine split(m2,w,mmin,sigma,iseed,dwmax,dw,growthrate,nprog,mprog) 
   !
   ! Uses
   use Numerical_Parameters
@@ -120,7 +120,7 @@ subroutine split(m2,w,mmin,sigma,iseed,dwmax,dw,nprog,mprog)
   integer iseed,nprog
   !
   ! Floats
-  REAL m2,mmin,dwmax,dw,mprog(2)
+  REAL m2,mmin,dwmax,dw,growthrate,mprog(2)
 
   !
   ! Functions

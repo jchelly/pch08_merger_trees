@@ -40,6 +40,9 @@ implicit none
  G0=0.57
  gamma_1=0.38
  gamma_2=-0.01
+ gamma_3=0.0
+ gamma_4=0.0
+ gamma_5=0.0
  eps1=0.1        
  eps2=0.1        
 
