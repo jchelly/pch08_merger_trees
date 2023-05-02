@@ -19,10 +19,12 @@ def make_plot():
     eps = read_progenitors("../output/eps_mphalo1e12_z4.txt")
     pch = read_progenitors("../output/pch_mphalo1e12_z4.txt")
     ajb = read_progenitors("../output/ajb2022_mphalo1e12_z4.txt")
+    galform = read_progenitors("../output/galform_benson2022.txt")
 
     for data, ls, label in ((eps, "r-", "EPS"),
                             (pch, "g-", "PCH"),
-                            (ajb, "b-", "Benson 2022")):
+                            (ajb, "b-", "Benson 2022"),
+                            (galform, "k-", "Galform (Benson 2022)")):
         tree_index = data["tree_index"]
         mphalo = data["mphalo"]
         mprog = data["mprog"]
