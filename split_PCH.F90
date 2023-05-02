@@ -130,12 +130,13 @@ subroutine split(m2,w,mmin,sigma,iseed,dwmax,dw,growthrate,nprog,mprog)
   external sigma
   !
   ! Common blocks
-  REAL :: dlsigdlm,sigsq_m2,sigsq_hf,qmin,diff_qmin,diff12_qmin
-  REAL :: diff32_qmin,v_qmin,diff_hf,diff12_hf,diff32_hf,v_hf,sfac
+  REAL :: dlsigdlm,sigsq_m2,sigsq_hf,qmin,diff_qmin,diff_lambda_qmin
+  REAL :: diff_lambda_hf,diff_lambda_q,diff_q,diff12_qmin,dlsigdlm_m2
+  REAL :: v_qmin,diff_hf,v_hf,sfac
   REAL :: two_pow_beta ,beta ,eta_inv,half_pow_eta,qminexp,ffac,dn_dw,n_av,f
   REAL :: random ,q,alpha_q,sigsq_q,r_q,v_q,mtemp 
-  REAL :: sig_m2,sig_hf,sig_q,diff12_q,b,dw_eps2 ,alpha_hf
-  REAL :: mu,w,gfac0,gfac1,eta,q_pow_eta,z,J_UNRESOLVED
+  REAL :: sig_m2,sig_hf,sig_q,b,dw_eps2 ,alpha_hf
+  REAL :: mu,w,gfac0,gfac1,eta,q_pow_eta,z,J_UNRESOLVED,kappa,lambda
   !
   ! Parameters
   REAL, parameter :: EPSETA=1e-6,EPSQ=6.0e-6
@@ -165,13 +166,13 @@ subroutine split(m2,w,mmin,sigma,iseed,dwmax,dw,growthrate,nprog,mprog)
   !
   ! 1) Compute some useful numbers.
   ! 
-  sig_m2=sigma(m2,dlsigdlm) ! sigma(m2)**2 and slope alpha
+  sig_m2=sigma(m2,dlsigdlm_m2) ! sigma(m2)**2 and slope alpha
   sigsq_m2=sig_m2**2 
   sig_hf=sigma(0.5*m2,dlsigdlm) ! sigma(m2/2) and slope alpha_hf
   sigsq_hf=sig_hf**2
   alpha_hf=-dlsigdlm
   qmin=mmin/m2 ! Minimum mass ratio qmin.
-  gfac0=G0 * ((w/sig_m2)**gamma_2) 
+  gfac0=G0 * ((w/sig_m2)**gamma_2) *(growthrate**gamma_4)*(abs(dlsigdlm_m2)**gamma_5)
   ! 
   if (qmin.lt.(0.5-EPSQ)) then ! Generate fragment with qmin<q<1/2
 !    More useful numbers needed only when qmin>1/2
@@ -181,27 +182,28 @@ subroutine split(m2,w,mmin,sigma,iseed,dwmax,dw,growthrate,nprog,mprog)
         mu=alpha_hf
      end if
      gfac1= gfac0 * ((sig_hf/sig_m2)**gamma_1) / (2.0**(mu*gamma_1))
-     ! 
-     ! 2) Find B and beta such that B*q^beta = v(q) at q=qmin and q=1/2
-     !    where v(q) = sigma(q*m2)^2/(sigma(q*m2)^2-sigma(m2)^2)^(3/2).
-     ! 
+     !
+     ! 2) Find B and beta such that B*q^beta = v(q) at q=qmin and q=1/2 where 
+     !v(q) = [ sigma(q*m2)^2/(sigma(q*m2)^2-sigma(m2)^2)^3/2 ] [1-sigma^2(m2)/sigma^2(m1)]^gamma_3
+     !     = sigma(q*m2)^{2-2gamma_3}/(sigma(q*m2)^2-sigma(m2)^2)^{3/2-gamma_3}.
+     !     = sigma(q*m2)^{2kappa}/(sigma(q*m2)^2-sigma(m2)^2)^{lambda}  where kappa=1-gamma_3 and lambda=3/2-gamma_3
+     !
+     kappa =1.0-gamma_3   
+     lambda=1.5-gamma_3   
      diff_qmin=sigsq_qmin-sigsq_m2
-     diff12_qmin=sqrt(diff_qmin)
-     diff32_qmin=diff_qmin*diff12_qmin
+     diff_lambda_qmin=diff_qmin**lambda
 #ifdef DEBUG
-     if (diff32_qmin.le.0.0) stop 'split(): DEBUG/FATAL - diff32_qmin<=0 !'
+     if (diff_lambda_qmin.le.0.0) stop 'split(): DEBUG/FATAL - diff_lambda_qmin<=0 !'
 #endif
-     v_qmin=sigsq_qmin/diff32_qmin
+     v_qmin=sigsq_qmin**kappa/diff_lambda_qmin
      ! 
      diff_hf=sigsq_hf-sigsq_m2
-     diff12_hf=sqrt(diff_hf)
-     diff32_hf=diff_hf*diff12_hf
+     diff_lambda_hf=diff_hf**lambda
 #ifdef DEBUG
-     if (diff32_hf.le.0) stop 'split(): DEBUG/FATAL - diff32_hf<=0 !'
+     if (diff_lambda_hf.le.0) stop 'split(): DEBUG/FATAL - diff_lambda_hf<=0 !'
 #endif
-     v_hf=sigsq_hf/diff32_hf
-     ! sfac=sqrt(2*(sigma(m2/2)^2 - sigma(m2)^2)), used in (3) below
-     sfac=SQRT2*diff12_hf   
+     v_hf=sigsq_hf**kappa/diff_lambda_hf
+     sfac=SQRT2*sqrt(diff_hf) ! sfac=sqrt(2*(sigma(m2/2)^2 - sigma(m2)^2)), used in (3) below. 
      ! 
 #ifdef DEBUG
      if (v_hf.le.0) stop 'split(): DEBUG/FATAL v_hf<=0 !'
@@ -249,8 +251,8 @@ subroutine split(m2,w,mmin,sigma,iseed,dwmax,dw,growthrate,nprog,mprog)
 #ifdef DEBUG
      if (diff12_qmin.le.0) stop 'split(): DEBUG/FATAL - diff12_qmin<=0 !'
 #endif
-     z=sig_m2/diff12_qmin    
-     f=SQRT2OPI*dw * gfac0 * J_UNRESOLVED(z) /sig_m2
+     z=sig_m2/sqrt(diff_qmin)    
+     f=SQRT2OPI*dw * gfac0 * J_UNRESOLVED(z,gamma_1,gamma_3)/sig_m2
      ! 
      ! 5) Randomly choose one or zero progeny depending on n_av.
      random=ran3(iseed)
@@ -330,8 +332,7 @@ subroutine split(m2,w,mmin,sigma,iseed,dwmax,dw,growthrate,nprog,mprog)
      ! 
   else ! qmin>1/2 and so only progenitors are unresolved
      diff_hf=sigsq_hf-sigsq_m2
-     diff12_hf=sqrt(diff_hf)
-     sfac=SQRT2*diff12_hf   
+     sfac=SQRT2*sqrt(diff_hf)   
      dw=min(eps1*sfac,dwmax) !ensure linear dependence on dw and < dwmax
      diff_qmin=sigsq_qmin-sigsq_m2
      if (diff_qmin.lt.0.0) then
@@ -342,10 +343,10 @@ subroutine split(m2,w,mmin,sigma,iseed,dwmax,dw,growthrate,nprog,mprog)
      diff12_qmin=sqrt(diff_qmin)
      if (diff12_qmin.gt.SQRT2OPI*dw) then
 #ifdef DEBUG
-        if (diff12_qmin.le.0) stop 'split(): DEBUG/FATAL diff12_qmin<=0 !' 
+        if (diff12_qmin.le.0) stop 'split(): DEBUG/FATAL diff12_qmin<=0 !'
 #endif
-        z=sig_m2/diff12_qmin    
-       f=SQRT2OPI*dw * gfac0 * J_UNRESOLVED(z) /sig_m2
+        z=sig_m2/diff12_qmin
+        f=SQRT2OPI*dw * gfac0 * J_UNRESOLVED(z)/sig_m2
      else
         f=1.0
      end if
