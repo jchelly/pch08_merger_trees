@@ -25,9 +25,17 @@ implicit none
 !
 !Mass of halo for which the tree is to be grown. The mass resolution of
 !the tree and the number of trees to grow. 
- mphalo=1.0e+14  !halo mass at base of tree
+ mphalo=1.0e+12  !halo mass at base of tree
  mres = 1.0e+08  !mass resolution
- ntree=2         !number of trees
+ ntree=100         !number of trees
+
+ ! EPS params
+ G0=1.0
+ gamma_1=0
+ gamma_2=0
+ gamma_3=0
+ gamma_4=0
+ gamma_5=0
 
 ! Parameters of the Merger Tree Algorithm as defined in 
 ! Parkinson, Cole and Helly (2007arXiv0708.138 version 3 and in MNRAS paper)
@@ -37,12 +45,12 @@ implicit none
 ! and the fits redone. Using this code and these new parameters will
 ! produce near identical results to the old code with the old parameters.
 ! (passed in module Modified_Merger_Tree and Time_Parameters)
- G0=0.57
- gamma_1=0.38
- gamma_2=-0.01
- gamma_3=0.0
- gamma_4=0.0
- gamma_5=0.0
+ ! G0=0.57
+ ! gamma_1=0.38
+ ! gamma_2=-0.01
+ ! gamma_3=0.0
+ ! gamma_4=0.0
+ ! gamma_5=0.0
  eps1=0.1        
  eps2=0.1        
 
@@ -115,11 +123,11 @@ do i=1,ntree
      iter=iter+1
      end do
 
-     write(0,*)'made a tree',i
-write(0,*) 'Omega_0=',omega0,'Lambda_0=',lambda0
-write(0,*) 'sigma_8=',sigma8,'Gamma=',Gamma
+     !write(0,*)'made a tree',i
+     !write(0,*) 'Omega_0=',omega0,'Lambda_0=',lambda0
+     !write(0,*) 'sigma_8=',sigma8,'Gamma=',Gamma
 
-     write(0,*)'Counting the number of nodes in the tree.'
+     !write(0,*)'Counting the number of nodes in the tree.'
 !
 !    You might want to insert your own code here and pass it the
 !    tree.
@@ -128,21 +136,26 @@ write(0,*) 'sigma_8=',sigma8,'Gamma=',Gamma
      count = 0
      do while (associated(This_Node))
         count = count + 1
+
+        if(This_Node%jlevel.eq.nlev)then
+           write(*,*)i, mphalo, This_Node%mhalo
+        endif
+
         This_Node => Walk_Tree(This_Node)
      end do
-     write(0,'(a,i3,a,i8)') 'number of nodes in tree',i,' is',count
+     !write(0,'(a,i3,a,i8)') 'number of nodes in tree',i,' is',count
 
 !   Write out the information for the first couple of
 !   halos in the tree
-     write(0,*) 'Example information from the tree:'
-     This_Node => MergerTree(1)
-     write(0,*) 'Base node:'
-     write(0,*) '  mass=',This_node%mhalo,' z= ',1.0/alev(This_node%jlevel)-1.0,' number of progenitors ',This_node%nchild
-     This_Node => This_node%child !move to first progenitor
-     write(0,*) 'First progenitor:'
-     write(0,*) '  mass=',This_node%mhalo,' z= ',1.0/alev(This_node%jlevel)-1.0
-     This_Node => This_node%sibling !move to 2nd progenitor
-     write(0,*) '  mass=',This_node%mhalo,' z= ',1.0/alev(This_node%jlevel)-1.0
+     ! write(0,*) 'Example information from the tree:'
+     ! This_Node => MergerTree(1)
+     ! write(0,*) 'Base node:'
+     ! write(0,*) '  mass=',This_node%mhalo,' z= ',1.0/alev(This_node%jlevel)-1.0,' number of progenitors ',This_node%nchild
+     ! This_Node => This_node%child !move to first progenitor
+     ! write(0,*) 'First progenitor:'
+     ! write(0,*) '  mass=',This_node%mhalo,' z= ',1.0/alev(This_node%jlevel)-1.0
+     ! This_Node => This_node%sibling !move to 2nd progenitor
+     ! write(0,*) '  mass=',This_node%mhalo,' z= ',1.0/alev(This_node%jlevel)-1.0
 
 
 end do
