@@ -138,8 +138,10 @@ subroutine split(m2,w,mmin,sigma,iseed,dwmax,dw,growthrate,nprog,mprog)
   REAL :: sig_m2,sig_hf,sig_q,b,dw_eps2 ,alpha_hf
   REAL :: mu,w,gfac0,gfac1,eta,q_pow_eta,z,J_UNRESOLVED,kappa,lambda
   !
+  logical :: constant_vq
+
   ! Parameters
-  REAL, parameter :: EPSETA=1e-6,EPSQ=6.0e-6
+  REAL, parameter :: EPSETA=1e-6,EPSQ=6.0e-6,EPSBETA=1.0e-10
   ! 
   ! Saves
   REAL, save :: mminlast,sigsq_qmin,sig_qmin
@@ -210,16 +212,19 @@ subroutine split(m2,w,mmin,sigma,iseed,dwmax,dw,growthrate,nprog,mprog)
      if (qmin.le.0) stop 'split(): DEBUG/FATAL qmin<=0 !'
 #endif
      beta=log(v_qmin/v_hf)/log(2.0*qmin)
-     if (beta.le.0.0) then
-        write (0,*) 'split(): FATAL - beta<0'
-        write (0,*) '                     qmin = ',qmin,', log(2*qmin) = ',log(2.0*qmin)
-        write (0,*) '                   v_qmin = ',v_qmin
-        write (0,*) '                     v_hf = ',v_hf
-        write (0,*) '         log(v_qmin/v_hf) = ',log(v_qmin/v_hf)
-        write (0,*) '                     beta = ',beta
-        write (0,*) '         This can probably be avoided by increasing EPSQ.'
-        stop
+     if (beta.le.EPSBETA) then
+        !If we reach here then it is probably because sigma(M) is not strictly monotonically
+        !increasing with decreasing mass. This shouldn't happen in the CDM case.
+        !Here we'll assume that we've reached here as this is a WDM case and that 
+        !sigma(M) is effectively constant for all lower masses.
+        !We'll deal with this by assuming v(q) is a constant, b, and beta=0 such that
+        !v_q/(b*q**beta)=1  for all q
+        beta=0.0
+        constant_vq=.true.  !assume v(q) is a constant
+     else   
+        constant_vq=.false.
      end if
+
      two_pow_beta=2.0**beta
      b=v_hf*two_pow_beta
      eta=beta-1.0-gamma_1*mu
@@ -274,11 +279,13 @@ subroutine split(m2,w,mmin,sigma,iseed,dwmax,dw,growthrate,nprog,mprog)
         sig_q=sigma(q*m2,dlsigdlm) ! sigma(q m2), alpha_q
         sigsq_q=sig_q**2
         alpha_q=-dlsigdlm
-        diff12_q=sqrt(sigsq_q-sigsq_m2)
-        v_q=sigsq_q/diff12_q**3
-        ! Acceptance probability=R(q)<1
-        r_q=(alpha_q/alpha_hf)*((sig_q*(2.0*q)**mu/sig_hf)**gamma_1) * &
- &                v_q/(b*q**beta)
+        r_q=(alpha_q/alpha_hf)*((sig_q*(2.0*q)**mu/sig_hf)**gamma_1)
+        if(.not.constant_vq)then
+           diff_q=sigsq_q-sigsq_m2
+           diff_lambda_q=diff_q**lambda
+           v_q=sigsq_q**kappa/diff_lambda_q
+           r_q=r_q * v_q/(b*q**beta)
+        endif
         ! 
 #ifdef DEBUG
 !      If the assumptions regarding the behaviour of sigma(m) that 
