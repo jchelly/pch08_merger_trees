@@ -263,6 +263,7 @@ subroutine make_tree(m0,a0,mmin,alev,nlev,iseed,split,sigma,deltc,nfragmax,ierr,
   use Defined_Types
   use Make_Tree_Arrays
   use Make_Tree_Module
+  use Growth_Rate_Module
 #ifdef DEBUG
   use Run_Statistics
 #endif
@@ -280,7 +281,7 @@ subroutine make_tree(m0,a0,mmin,alev,nlev,iseed,split,sigma,deltc,nfragmax,ierr,
        &,nfragtot,nprog
   !
   ! Floats
-  real a0,alev(nlev),dw,dwmax,m,m0,mbytes,mmin,mprog(2),mtr(nfragmax),w,wfin,wlev(nlev)
+  real a0,alev(nlev),dw,dwmax,m,m0,mbytes,mmin,mprog(2),mtr(nfragmax),w,wfin,wlev(nlev),growthrate(nlev)
   !
   ! Parameters
   parameter (MAXNODES=1e7) ! Absolute limit on number of nodes.
@@ -342,10 +343,11 @@ if (alloc_err.ne.0) stop 'make_tree(): FATAL - failed to allocate memory [lnode]
   alev(1)=a0 ! Enforce this!
   do ilev=1,nlev
      wlev(ilev)=deltc(alev(ilev))
+     growthrate(ilev)=growth_rate_at_z(1.0/alev(ilev)-1.0)
   enddo
   inode = 1
 #ifdef DEBUG
-  write (0,*) 'mke_tree(): DEBUG - done creating array of values of w=deltc(a)'
+  write (0,*) 'make_tree(): DEBUG - done creating array of values of w=deltc(a)'
 #endif
   !
   ! Make binary tree.

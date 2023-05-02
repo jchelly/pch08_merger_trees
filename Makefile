@@ -29,7 +29,7 @@ clean:
 #Dependencies
 memory.o: memory_modules.o defined_types.o
 memory_modules.o: defined_types.o
-make_tree.o: defined_types.o
+make_tree.o: defined_types.o growth_rate.o
 sigmacdm_spline.o: num_pars.o parameters.o
 deltcrit.o: num_pars.o
 defined_types.o: kind_numbers.o
