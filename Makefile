@@ -18,7 +18,7 @@ F90       =  -fast
 	$(f90invoke) -c $< -o $*.o $(F90)
 
 # Object code list
-TREE_OBJS =  num_pars.o defined_types.o kind_numbers.o parameter_modules.o   memory_modules.o tree_routines.o modified_merger_tree.o deltcrit.o memory.o sigmacdm_spline.o interp.o locate.o hyperbolic.o split_PCH.o ran3.o spline.o make_tree.o indexxx.o transfer_function.o unresolved_mass.o parameters.o
+TREE_OBJS =  num_pars.o defined_types.o kind_numbers.o parameter_modules.o   memory_modules.o tree_routines.o modified_merger_tree.o deltcrit.o memory.o sigmacdm_spline.o interp.o locate.o hyperbolic.o split_PCH.o ran3.o spline.o make_tree.o indexxx.o transfer_function.o unresolved_mass.o parameters.o growth_rate.o
 
 
 all:	trees.exe
@@ -29,7 +29,7 @@ clean:
 #Dependencies
 memory.o: memory_modules.o defined_types.o
 memory_modules.o: defined_types.o
-make_tree.o: defined_types.o
+make_tree.o: defined_types.o growth_rate.o
 sigmacdm_spline.o: num_pars.o parameters.o
 deltcrit.o: num_pars.o
 defined_types.o: kind_numbers.o

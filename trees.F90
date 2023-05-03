@@ -22,6 +22,7 @@ implicit none
   integer :: iter,iseed0,iseed
   EXTERNAL deltcrit,sigmacdm,split
   real :: dc
+  integer :: method
 !
 !Mass of halo for which the tree is to be grown. The mass resolution of
 !the tree and the number of trees to grow. 
@@ -29,19 +30,45 @@ implicit none
  mres = 1.0e+08  !mass resolution
  ntree=2         !number of trees
 
-! Parameters of the Merger Tree Algorithm as defined in 
-! Parkinson, Cole and Helly (2007arXiv0708.138 version 3 and in MNRAS paper)
-! These values supercede the values given in the
-! original astro-ph posting due to a small error in the code being
-! identified. In this version of the code the error has been rectified
-! and the fits redone. Using this code and these new parameters will
-! produce near identical results to the old code with the old parameters.
-! (passed in module Modified_Merger_Tree and Time_Parameters)
- G0=0.57
- gamma_1=0.38
- gamma_2=-0.01
- eps1=0.1        
- eps2=0.1        
+method=3
+select case(method)
+   case(1)
+      ! Cole et al (2000) method
+      G0=1.0
+      gamma_1=0.0
+      gamma_2=0.0
+      gamma_3=0.0
+      gamma_4=0.0
+      gamma_5=0.0
+   case(2)
+      ! Parameters of the Merger Tree Algorithm as defined in 
+      ! Parkinson, Cole and Helly (2007arXiv0708.138 version 3 and in MNRAS paper)
+      ! These values supercede the values given in the
+      ! original astro-ph posting due to a small error in the code being
+      ! identified. In this version of the code the error has been rectified
+      ! and the fits redone. Using this code and these new parameters will
+      ! produce near identical results to the old code with the old parameters.
+      ! (passed in module Modified_Merger_Tree and Time_Parameters)
+      G0=0.57
+      gamma_1=0.38
+      gamma_2=-0.01
+      gamma_3=0.0
+      gamma_4=0.0
+      gamma_5=0.0
+   case(3)
+      ! Parameters of Andrew Benson's 2022 fit
+      G0=0.5024
+      gamma_1=0.2493
+      gamma_2=-9.5846e-2
+      gamma_3=4.5166e-2
+      gamma_4=0.2342
+      gamma_5=-0.1878
+   case default
+      write(0,*)"Unrecognised method parameter"
+      stop
+   end select
+   eps1=0.1
+   eps2=0.1
 
 !
 ! Cosmological and Power Spectrum parameters
