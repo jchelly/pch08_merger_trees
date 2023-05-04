@@ -16,8 +16,13 @@ implicit none
   integer, parameter :: long = selected_real_kind(9,99)
   real, allocatable  :: wlev(:),alev(:)
   integer, allocatable  :: ifraglev(:)
-  real :: mphalo,mres,ahalo,deltcrit,sigmacdm,zmax
-  integer, parameter:: nlev=10 !number of levels of the tree to store
+  ! Fixed output redshifts
+  integer, parameter:: nlev=5 !number of levels of the tree to store
+  !real, dimension(nlev), parameter :: zlev = (/0.0, 1.0, 2.0, 4.0, 8.0/)
+  !real, dimension(nlev), parameter :: zlev = (/0.0, 1.002200e+00, 2.001836e+00, 3.994505e+00, 8.011020e+00/)
+  real, dimension(nlev), parameter :: zlev = (/0.0, 9.906503e-01, 1.984519e+00, 3.965693e+00, 7.959037e+00/)
+
+  real :: mphalo,mres,ahalo,deltcrit,sigmacdm!,zmax
   integer :: ierr,nhalomax,nhalo,nhalolev(nlev),jphalo(nlev),ilev
   integer :: iter,iseed0,iseed
   EXTERNAL deltcrit,sigmacdm,split
@@ -28,7 +33,7 @@ implicit none
 !the tree and the number of trees to grow. 
  mphalo=1.0e+12  !halo mass at base of tree
  mres = 1.0e+08  !mass resolution
- ntree=100         !number of trees
+ ntree=10000     !number of trees
 
  ! EPS params
  G0=1.0
@@ -38,7 +43,7 @@ implicit none
  gamma_4=0
  gamma_5=0
 
-method=3
+method=2
 select case(method)
    case(1)
       ! Cole et al (2000) method
@@ -83,15 +88,15 @@ select case(method)
 ! (passed in module  Cosmological_Parameters and Power_Spectrum_Parameters)
 
  pkinfile='pk_Mill.dat' !Tabulated Millennium Simulation linear P(k)
-! itrans=-1  !indicates use transfer function tabulated in file pkinfile
-  itrans=1   !indicates use BBKS CDM transfer function with specified Gamma and Omega0
+ itrans=-1  !indicates use transfer function tabulated in file pkinfile
+!  itrans=1   !indicates use BBKS CDM transfer function with specified Gamma and Omega0
 !  itrans=2   !indicates use Bond & Efstathiou CDM transfer function with specified Gamma and Omega0
 ! itrans=3   !indicates use Eisenstein and Hu CDM transfer function with specified Omega0, Omegab and h0
 ! CMB_T0=2.73 !For Eisenstein and Hu CDM transfer function one must specify the CMB temperature
  omega0=0.25 
  lambda0=0.75
  h0=0.73
- omegab=0.04
+ omegab=0.045
  Gamma=omega0*h0  ! Omega_m.h  ignoring effect of baryons
 
 
@@ -118,9 +123,9 @@ select case(method)
   allocate(wlev(nlev),alev(nlev),ifraglev(nlev))
 ! Specify output/storage times of the merger tree
   ahalo=1.0       !expansion factor at base of tree
-  zmax=4.0        !maximum redshift of stored tree
+  !zmax=4.0        !maximum redshift of stored tree
   do ilev=1,nlev  !tree levels uniform between z=0 and zmax
-     alev(ilev)=1.0/(1.0+zmax*real(ilev-1)/real(nlev-1))
+     alev(ilev)=1.0/(1.0+zlev(ilev))
      dc = deltcrit(alev(ilev))
      write(0,'(a2,1x,f6.3,1x,a,f6.3)')'z=',(1/alev(ilev)) -1.0,'at which deltcrit=',dc
   end do
@@ -160,11 +165,7 @@ do i=1,ntree
      count = 0
      do while (associated(This_Node))
         count = count + 1
-
-        if(This_Node%jlevel.eq.nlev)then
-           write(*,*)i, mphalo, This_Node%mhalo
-        endif
-
+        write(*,*)i, mphalo, This_Node%mhalo, This_Node%jlevel, zlev(This_Node%jlevel)
         This_Node => Walk_Tree(This_Node)
      end do
      !write(0,'(a,i3,a,i8)') 'number of nodes in tree',i,' is',count
@@ -182,7 +183,7 @@ do i=1,ntree
      ! write(0,*) '  mass=',This_node%mhalo,' z= ',1.0/alev(This_node%jlevel)-1.0
 
 
-end do
+  end do
 
 deallocate(wlev,alev,ifraglev)
 
